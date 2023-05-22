@@ -32,6 +32,7 @@
 (require 'eww)
 (require 'eldoc)
 (require 'imenu)
+(require 'thingatpt)
 
 
 (defgroup devdocs-browser nil
@@ -333,7 +334,7 @@ Can be used as `imenu-create-index-function'."
 (defvar devdocs-browser--offline-data-json-filename "content.json")
 (defvar devdocs-browser--offline-data-dir-name "content")
 
-(defun devdocs-browser--completing-read (prompt collection &optional def)
+(defun devdocs-browser--completing-read (prompt collection &optional initial def)
   "Helper function for `completing-read'.
 PROMPT: same meaning, but this function will append ';' at the end;
 COLLECTION: alist of (name . props), where props is a plist with
@@ -371,7 +372,7 @@ DEF: same meaning;"
                                     (group-function . ,group-function)))
                     (complete-with-action action collection str pred)))
                 nil t  ;; require-match
-                nil nil def)))
+                initial nil def)))
       (or (plist-get (gethash res collection-ht) :value)
           res))))
 
@@ -744,7 +745,7 @@ When called interactively, user can choose from the list."
           (and (not no-fallback-all) (devdocs-browser-list-installed-slugs))))))
 
 ;;;###autoload
-(defun devdocs-browser-open-in (slug-or-name-list)
+(defun devdocs-browser-open-in (slug-or-name-list &optional initial)
   "Open entry in specified docs SLUG-OR-NAME-LIST.
 When called interactively, user can choose from the list."
   (interactive
@@ -789,7 +790,7 @@ When called interactively, user can choose from the list."
     (let* ((selected-value
             (devdocs-browser--completing-read
              (format "Devdocs browser [%s]" (mapconcat #'identity slugs ","))
-             rows def)))
+             rows initial def)))
       (when selected-value
         (apply #'devdocs-browser--eww-open selected-value)))))
 
@@ -803,6 +804,17 @@ When all of them are nil, all installed docs are used."
   (interactive)
   (devdocs-browser-open-in (devdocs-browser--default-active-slugs)))
 
+;;;###autoload
+(defun devdocs-browser-open-at-point ()
+  "Open entry in active docs with initial input from the symbol at point.
+Active docs are specified by `devdocs-browser-active-docs',
+or `devdocs-browser-major-mode-docs-alist',
+or the current doc type if called in a devdocs eww buffer.
+When all of them are nil, all installed docs are used."
+  (interactive)
+  (devdocs-browser-open-in
+   (devdocs-browser--default-active-slugs)
+   (thing-at-point 'symbol t)))
 
 (provide 'devdocs-browser)
 ;;; devdocs-browser.el ends here
