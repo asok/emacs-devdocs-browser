@@ -758,7 +758,7 @@ When called interactively, user can choose from the list."
             nil t nil nil def))))
 
   (let ((current-word-regex
-         (when-let ((word (thing-at-point 'word t)))
+         (when-let ((word (or initial (thing-at-point 'word t))))
            (concat "\\<" (regexp-quote word) "\\>")))
         slugs rows def)
     (dolist (slug-or-name slug-or-name-list)
